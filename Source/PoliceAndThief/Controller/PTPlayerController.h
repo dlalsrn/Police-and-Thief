@@ -11,6 +11,9 @@ class POLICEANDTHIEF_API APTPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
+public:
+	APTPlayerController();
+
 protected:
 	virtual void BeginPlay() override;
 

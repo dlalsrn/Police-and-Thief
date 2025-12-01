@@ -25,19 +25,6 @@ public class PoliceAndThief : ModuleRules
 
 		PublicIncludePaths.AddRange(new string[] {
 			"PoliceAndThief",
-			"PoliceAndThief/Variant_Platforming",
-			"PoliceAndThief/Variant_Platforming/Animation",
-			"PoliceAndThief/Variant_Combat",
-			"PoliceAndThief/Variant_Combat/AI",
-			"PoliceAndThief/Variant_Combat/Animation",
-			"PoliceAndThief/Variant_Combat/Gameplay",
-			"PoliceAndThief/Variant_Combat/Interfaces",
-			"PoliceAndThief/Variant_Combat/UI",
-			"PoliceAndThief/Variant_SideScrolling",
-			"PoliceAndThief/Variant_SideScrolling/AI",
-			"PoliceAndThief/Variant_SideScrolling/Gameplay",
-			"PoliceAndThief/Variant_SideScrolling/Interfaces",
-			"PoliceAndThief/Variant_SideScrolling/UI"
 		});
 
 		// Uncomment if you are using Slate UI
