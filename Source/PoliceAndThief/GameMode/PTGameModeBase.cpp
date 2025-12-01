@@ -3,12 +3,12 @@
 
 void APTGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
+	Super::PostLogin(NewPlayer);
+
 	if (!IsValid(NewPlayer))
 	{
 		return;
 	}
-
-	Super::PostLogin(NewPlayer);
 
 	APTPlayerController* NewPTPlayer = Cast<APTPlayerController>(NewPlayer);
 	if (IsValid(NewPTPlayer) && !AllPlayerControllers.Contains(NewPTPlayer))

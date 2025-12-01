@@ -14,12 +14,16 @@ public class PoliceAndThief : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
+
+			// Add dependencies
 			"AIModule",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
-		});
+			"Slate",
+			"NavigationSystem",
+            "GameplayTasks"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

@@ -18,6 +18,21 @@ protected:
 
 	virtual void BeginPlay() override;
 
+protected:
+	FTimerHandle MainTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 WaitingTime;
+
+	int32 RemainWaitingTimeForPlaying;
+
+	int32 MinimumPlayerCountForPlaying;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 EndingTime;
+
+	int32 RemainWaitingTimeForEnding;
+
 private:
 	TArray<TObjectPtr<APTPlayerController>> AllPlayerControllers;
 };

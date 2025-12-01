@@ -51,6 +51,11 @@ void APTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void APTPlayerCharacter::Move(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller)
@@ -68,6 +73,11 @@ void APTPlayerCharacter::Move(const FInputActionValue& Value)
 
 void APTPlayerCharacter::Look(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller)
@@ -79,10 +89,20 @@ void APTPlayerCharacter::Look(const FInputActionValue& Value)
 
 void APTPlayerCharacter::StartJump(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
 	Jump();
 }
 
 void APTPlayerCharacter::StopJump(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
 	StopJumping();
 }
