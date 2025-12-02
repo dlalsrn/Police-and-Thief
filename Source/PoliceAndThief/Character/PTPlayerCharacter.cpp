@@ -5,6 +5,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystemComponent.h"
+#include "PlayerState/PTPlayerState.h"
+#include "PoliceAndThief.h"
 
 APTPlayerCharacter::APTPlayerCharacter()
 {
@@ -32,27 +34,11 @@ APTPlayerCharacter::APTPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
-
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
-	AbilitySystemComponent->SetIsReplicated(true);
 }
 
 void APTPlayerCharacter::BeginPlay()
 {
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-
-	if (IsValid(AbilitySystemComponent))
-	{
-		return;
-	}
-
-	for (TSubclassOf<UGameplayAbility> AbilityClass : AllAbilities)
-	{
-		if (IsValid(AbilityClass))
-		{
-			FGameplayAbilitySpec Spec(AbilityClass, 1, 0, this);
-		}
-	}
+	Super::BeginPlay();
 }
 
 void APTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -69,6 +55,26 @@ void APTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &APTPlayerCharacter::StartJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &APTPlayerCharacter::StopJump);
 	}
+}
+
+void APTPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	InitializeASC();
+
+	if (HasAuthority())
+	{
+		PT_LOG_NET(LogPTNet, Log, TEXT("Initializing Abilities for Player Character"));
+		InitializeAbilities();
+	}
+}
+
+void APTPlayerCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	InitializeASC();
 }
 
 void APTPlayerCharacter::Move(const FInputActionValue& Value)
@@ -116,7 +122,14 @@ void APTPlayerCharacter::StartJump(const FInputActionValue& Value)
 		return;
 	}
 
-	Jump();
+	UAbilitySystemComponent* ASC = GetASC();
+	if (!IsValid(ASC))
+	{
+		return;
+	}
+
+	FGameplayTag JumpTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Jump"));
+	ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(JumpTag));
 }
 
 void APTPlayerCharacter::StopJump(const FInputActionValue& Value)
@@ -127,4 +140,56 @@ void APTPlayerCharacter::StopJump(const FInputActionValue& Value)
 	}
 
 	StopJumping();
+}
+
+void APTPlayerCharacter::InitializeASC()
+{
+	APTPlayerState* PTPlayerState = GetPlayerState<APTPlayerState>();
+	if (!IsValid(PTPlayerState))
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = PTPlayerState->GetAbilitySystemComponent();
+	if (!IsValid(ASC))
+	{
+		return;
+	}
+
+	ASC->InitAbilityActorInfo(PTPlayerState, this);
+}
+
+void APTPlayerCharacter::InitializeAbilities()
+{
+	UAbilitySystemComponent* ASC = GetASC();
+	if (!IsValid(ASC))
+	{
+		return;
+	}
+
+	for (const TSubclassOf<UGameplayAbility>& AbilityClass : AllAbilities)
+	{
+		if (IsValid(AbilityClass))
+		{
+			FGameplayAbilitySpec Spec(AbilityClass, 1, 0, this);
+			ASC->GiveAbility(Spec);
+		}
+	}
+}
+
+UAbilitySystemComponent* APTPlayerCharacter::GetASC() const
+{
+	APTPlayerState* PTPlayerState = GetPlayerState<APTPlayerState>();
+	if (!IsValid(PTPlayerState))
+	{
+		return nullptr;
+	}
+
+	UAbilitySystemComponent* ASC = PTPlayerState->GetAbilitySystemComponent();
+	if (!IsValid(ASC))
+	{
+		return nullptr;
+	}
+
+	return ASC;
 }
