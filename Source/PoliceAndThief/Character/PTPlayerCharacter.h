@@ -36,6 +36,8 @@ protected:
 
 	void StopJump(const FInputActionValue& Value);
 
+	void Attack(const FInputActionValue& Value);
+
 private:
 	void InitializeASC();
 
@@ -44,6 +46,12 @@ private:
 	UAbilitySystemComponent* GetASC() const;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USpringArmComponent> SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UCameraComponent> FollowCamera;
+
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
 
@@ -53,12 +61,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> JumpAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> AttackAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> AllAbilities;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USpringArmComponent> SpringArm;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> FollowCamera;
 };

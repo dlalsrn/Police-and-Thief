@@ -1,4 +1,5 @@
 #include "GA/GA_Attack.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 
 UGA_Attack::UGA_Attack()
 {
@@ -20,8 +21,27 @@ void UGA_Attack::ActivateAbility(
 		return;
 	}
 
+	UAbilityTask_PlayMontageAndWait* Task = 
+		UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+			this,
+			TEXT("AttackTask"),
+			AttackMontage,
+			1.0f
+		);
 
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	if (IsValid(Task))
+	{
+		Task->OnCompleted.AddDynamic(this, &UGA_Attack::OnMontageCompleted);
+		Task->OnInterrupted.AddDynamic(this, &UGA_Attack::OnMontageInterrupted);
+		Task->OnCancelled.AddDynamic(this, &UGA_Attack::OnMontageCancelled);
+
+		Task->ReadyForActivation();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UGA_Attack::ActivateAbility - Failed to create Ability Task"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+	}
 }
 
 void UGA_Attack::EndAbility(
@@ -33,4 +53,19 @@ void UGA_Attack::EndAbility(
 )
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UGA_Attack::OnMontageCompleted()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+}
+
+void UGA_Attack::OnMontageInterrupted()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+}
+
+void UGA_Attack::OnMontageCancelled()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }

@@ -27,6 +27,16 @@ public:
 		bool bWasCancelled
 	) override;
 
+private:
+	UFUNCTION()
+	void OnMontageCompleted();
+
+	UFUNCTION()
+	void OnMontageInterrupted();
+	
+	UFUNCTION()
+	void OnMontageCancelled();
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
 	TObjectPtr<UAnimMontage> AttackMontage;

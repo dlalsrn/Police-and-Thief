@@ -54,6 +54,8 @@ void APTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &APTPlayerCharacter::StartJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &APTPlayerCharacter::StopJump);
+
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &APTPlayerCharacter::Attack);
 	}
 }
 
@@ -140,6 +142,23 @@ void APTPlayerCharacter::StopJump(const FInputActionValue& Value)
 	}
 
 	StopJumping();
+}
+
+void APTPlayerCharacter::Attack(const FInputActionValue& Value)
+{
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = GetASC();
+	if (!IsValid(ASC))
+	{
+		return;
+	}
+
+	FGameplayTag AttackTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Attack"));
+	ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AttackTag));
 }
 
 void APTPlayerCharacter::InitializeASC()
