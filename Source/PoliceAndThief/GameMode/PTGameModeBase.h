@@ -18,6 +18,11 @@ protected:
 
 	virtual void BeginPlay() override;
 
+private:
+	void ElapsedTimerForMain();
+
+	void NotifyAllPlayers(const FString& Message);
+
 protected:
 	FTimerHandle MainTimerHandle;
 

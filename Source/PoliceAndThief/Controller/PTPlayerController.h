@@ -14,6 +14,9 @@ class POLICEANDTHIEF_API APTPlayerController : public APlayerController
 public:
 	APTPlayerController();
 
+	UFUNCTION(Client, Reliable)
+	void ClientRPCNotificationMessage(const FString& Message);
+
 protected:
 	virtual void BeginPlay() override;
 

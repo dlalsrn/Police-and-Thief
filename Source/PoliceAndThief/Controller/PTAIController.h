@@ -10,7 +10,10 @@ UCLASS()
 class POLICEANDTHIEF_API APTAIController : public AAIController
 {
 	GENERATED_BODY()
-	
+
+public:
+	void StartAIControl();
+
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 

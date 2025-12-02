@@ -13,7 +13,15 @@ void APTAIController::OnPossess(APawn* InPawn)
 	}
 
 	PT_LOG_NET(LogPTNet, Log, TEXT("AI Controller Possessed Pawn: %s"), *InPawn->GetName());
+}
 
+void APTAIController::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void APTAIController::StartAIControl()
+{
 	GetWorld()->GetTimerManager().SetTimer(
 		BTTimerHandle,
 		this,
@@ -23,16 +31,11 @@ void APTAIController::OnPossess(APawn* InPawn)
 	);
 }
 
-void APTAIController::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void APTAIController::StartBehaviorTree()
 {
 	if (BehaviorTree)
 	{
-		PT_LOG_NET(LogPTNet, Log, TEXT("AI Controller Start Behavior Tree"));
 		RunBehaviorTree(BehaviorTree);
+		PT_LOG_NET(LogPTNet, Log, TEXT("AI Controller Started Behavior Tree"));
 	}
 }

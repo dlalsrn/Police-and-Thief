@@ -7,6 +7,8 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class UAbilitySystemComponent;
+class UGameplayAbility;
 struct FInputActionValue;
 
 UCLASS()
@@ -18,6 +20,8 @@ public:
 	APTPlayerCharacter();
 
 protected:
+	virtual void BeginPlay() override;
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Move(const FInputActionValue& Value);
@@ -38,6 +42,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> JumpAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> AllAbilities;
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> SpringArm;
@@ -45,4 +52,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 };

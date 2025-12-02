@@ -22,6 +22,10 @@ public class PoliceAndThief : ModuleRules
 			"UMG",
 			"Slate",
 			"NavigationSystem",
+
+			// GAS
+			"GameplayAbilities",
+			"GameplayTags",
             "GameplayTasks"
         });
 

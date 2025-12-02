@@ -2,6 +2,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
+#include "Net/UnrealNetwork.h"
 
 APTPlayerController::APTPlayerController()
 {
@@ -33,4 +34,9 @@ void APTPlayerController::SetupInputComponent()
 			Subsystem->AddMappingContext(DefaultMappingContexts, 0);
 		}
 	}
+}
+
+void APTPlayerController::ClientRPCNotificationMessage_Implementation(const FString& Message)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Message);
 }

@@ -4,6 +4,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "AbilitySystemComponent.h"
 
 APTPlayerCharacter::APTPlayerCharacter()
 {
@@ -31,6 +32,27 @@ APTPlayerCharacter::APTPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
+	AbilitySystemComponent->SetIsReplicated(true);
+}
+
+void APTPlayerCharacter::BeginPlay()
+{
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+	if (IsValid(AbilitySystemComponent))
+	{
+		return;
+	}
+
+	for (TSubclassOf<UGameplayAbility> AbilityClass : AllAbilities)
+	{
+		if (IsValid(AbilityClass))
+		{
+			FGameplayAbilitySpec Spec(AbilityClass, 1, 0, this);
+		}
+	}
 }
 
 void APTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
