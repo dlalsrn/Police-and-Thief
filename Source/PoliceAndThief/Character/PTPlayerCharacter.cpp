@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "PlayerState/PTPlayerState.h"
 #include "PoliceAndThief.h"
+#include "Animation/PTAnimInstance.h"
 
 APTPlayerCharacter::APTPlayerCharacter()
 {
@@ -175,9 +176,25 @@ UAbilitySystemComponent* APTPlayerCharacter::GetAbilitySystemComponent() const
 	return ASC;
 }
 
-void APTPlayerCharacter::ClientRPCOnHit_Implementation()
+void APTPlayerCharacter::ServerRPCOnHit_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Player Character Hit!"));
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+
+	SetLifeSpan(5.0f);
+
+	NetMulticastRPCOnDie();
+}
+
+void APTPlayerCharacter::NetMulticastRPCOnDie_Implementation()
+{
+	UPTAnimInstance* AnimInst = Cast<UPTAnimInstance>(GetMesh()->GetAnimInstance());
+	if (IsValid(AnimInst))
+	{
+		AnimInst->SetIsDeath(true);
+	}
 }
 
 void APTPlayerCharacter::DrawDebugAttackCollision_Implementation(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward)

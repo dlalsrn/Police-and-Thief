@@ -22,8 +22,11 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	UFUNCTION(Client, Reliable)
-	void ClientRPCOnHit();
+	UFUNCTION(Server, Reliable)
+	void ServerRPCOnHit();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticastRPCOnDie();
 
 	UFUNCTION(Client, Reliable)
 	void DrawDebugAttackCollision(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);

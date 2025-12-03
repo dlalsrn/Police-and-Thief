@@ -57,7 +57,7 @@ void UGA_HitCheck::ActivateAbility(
 
 	for (APTPlayerCharacter* HitCharacter : HitCharacters)
 	{
-		HitCharacter->ClientRPCOnHit();
+		HitCharacter->ServerRPCOnHit();
 	}
 
 	FColor DrawColor = bHit ? FColor::Green : FColor::Red;
