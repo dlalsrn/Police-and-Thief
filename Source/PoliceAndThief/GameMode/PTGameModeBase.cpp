@@ -5,6 +5,9 @@
 #include "EngineUtils.h"
 #include "Controller/PTAIController.h"
 #include "Character/PTPlayerCharacter.h"
+#include "NavigationSystem.h"
+#include "NavigationPath.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void APTGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
@@ -46,7 +49,7 @@ void APTGameModeBase::BeginPlay()
 		true
 	);
 
-	FindAllAIControllers();
+	CollectSpawnPoints();
 
 	MinimumPlayerCountForPlaying = 2;
 	RemainWaitingTimeForPlaying = WaitingTime;
@@ -90,7 +93,7 @@ void APTGameModeBase::ElapsedTimerForMain()
 
 		if (RemainWaitingTimeForPlaying <= 0)
 		{
-			DestroyInitialCharacter();
+			StartGame();
 
 			for (APTAIController* PTAIController : AllAIControllers)
 			{
@@ -117,6 +120,14 @@ void APTGameModeBase::ElapsedTimerForMain()
 		if (PTGameState->GetAlivePlayerCount() <= 1)
 		{
 			PTGameState->SetCurrentMatchState(EMatchState::End);
+
+			for (APTAIController* PTAIController : AllAIControllers)
+			{
+				if (IsValid(PTAIController))
+				{
+					PTAIController->StopAIControl();
+				}
+			}
 		}
 
 		break;
@@ -130,7 +141,20 @@ void APTGameModeBase::ElapsedTimerForMain()
 
 		if (RemainWaitingTimeForEnding <= 0)
 		{
+			for (APTPlayerController* AliveController : AlivePlayerControllers)
+			{
+				AliveController->ClientRPCReturnToTitle();
+			}
+
+			for (APTPlayerController* DeadController : DeadPlayerControllers)
+			{
+				DeadController->ClientRPCReturnToTitle();
+			}
+
 			MainTimerHandle.Invalidate();
+
+			ResetGame();
+
 			return;
 		}
 
@@ -154,73 +178,66 @@ void APTGameModeBase::NotifyAllPlayers(const FString& Message)
 	}
 }
 
-void APTGameModeBase::FindAllAIControllers()
+void APTGameModeBase::StartGame()
 {
-	AllAIControllers.Empty();
-	AllAICharacters.Empty();
+	SpawnAICharacters();
 
-	for (TActorIterator<APTAIController> It(GetWorld()); It; ++It)
+	DestroyInitialPlayerCharacters();
+	for (APTPlayerController* AliveController : AlivePlayerControllers)
 	{
-		APTAIController* AIController = *It;
-		if (IsValid(AIController))
+		SpawnPlayerCharacter(AliveController);
+	}
+}
+
+void APTGameModeBase::ResetGame()
+{
+	APTGameStateBase* PTGameState = GetGameState<APTGameStateBase>();
+	if (!IsValid(PTGameState))
+	{
+		return;
+	}
+
+	PTGameState->SetCurrentMatchState(EMatchState::Wait);
+
+	AlivePlayerControllers.Empty();
+	DeadPlayerControllers.Empty();
+
+	RemainWaitingTimeForPlaying = WaitingTime;
+	RemainWaitingTimeForEnding = EndingTime;
+
+	DestroyAICharacters();
+}
+
+void APTGameModeBase::DestroyAICharacters()
+{
+	for (APTAIController* PTAIController : AllAIControllers)
+	{
+		if (!IsValid(PTAIController))
 		{
-			AllAIControllers.Add(AIController);
-
-			APTPlayerCharacter* PTCharacter = Cast<APTPlayerCharacter>(AIController->GetPawn());
-			if (IsValid(PTCharacter))
-			{
-				AllAICharacters.Add(PTCharacter);
-			}
+			UE_LOG(LogTemp, Warning, TEXT("Invalid AIController in DestroyInitialCharacter."));
+			continue;
 		}
+
+		ACharacter* AICharacter = Cast<ACharacter>(PTAIController->GetPawn());
+		if (IsValid(AICharacter))
+		{
+			PTAIController->UnPossess();
+			AICharacter->Destroy();
+		}
+
+		PTAIController->Destroy();
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("AIControllers: %d, AICharacters: %d"), AllAIControllers.Num(), AllAICharacters.Num());
+	AllAIControllers.Empty();
 }
 
-void APTGameModeBase::PossessRandomCharacter(APlayerController* NewPlayer)
-{
-	if (AllAICharacters.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No AI Characters to possess."));
-		return;
-	}
-
-	APTPlayerCharacter* SelectedCharacter = AllAICharacters[FMath::RandRange(0, AllAICharacters.Num() - 1)];
-	if (!IsValid(SelectedCharacter))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected AI Character is not valid."));
-		return;
-	}
-
-	APTAIController* OldAIController = Cast<APTAIController>(SelectedCharacter->GetController());
-	if (!IsValid(OldAIController))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected AI Character has no valid AI Controller."));
-		return;
-	}
-
-	OldAIController->UnPossess();
-
-	if (AllAIControllers.Contains(OldAIController))
-	{
-		AllAIControllers.Remove(OldAIController);
-	}
-
-	if (AllAICharacters.Contains(SelectedCharacter))
-	{
-		AllAICharacters.Remove(SelectedCharacter);
-	}
-
-	NewPlayer->Possess(SelectedCharacter);
-	SelectedCharacter->NetMulticastRPCRemoveBlockAttackTag();
-}
-
-void APTGameModeBase::DestroyInitialCharacter()
+void APTGameModeBase::DestroyInitialPlayerCharacters()
 {
 	for (APTPlayerController* PTPlayerController : AlivePlayerControllers)
 	{
 		if (!IsValid(PTPlayerController))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Invalid PlayerController in DestroyInitialCharacter."));
 			continue;
 		}
 
@@ -230,7 +247,115 @@ void APTGameModeBase::DestroyInitialCharacter()
 			PTPlayerController->UnPossess();
 			InitialPawn->Destroy();
 		}
+	}
+}
 
-		PossessRandomCharacter(PTPlayerController);
+void APTGameModeBase::SpawnAICharacters()
+{
+	AllAIControllers.Empty();
+
+	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!IsValid(NavSys))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Navigation System is not valid."));
+		return;
+	}
+
+	if (SpawnPoints.Num() == 0)
+	{
+		return;
+	}
+
+	const float SpawnRadius = 5000.f;
+
+	for (int32 i = 0; i < SpawnAICharacterCount; ++i)
+	{
+
+		FVector Base = SpawnPoints[FMath::RandRange(0, SpawnPoints.Num() - 1)];
+		FVector Offset = UKismetMathLibrary::RandomUnitVector() * 200.f;
+		Offset.Z = 0.f;
+		FVector SpawnLoc = Base + Offset;
+
+		FNavLocation Projected;
+		if (NavSys->ProjectPointToNavigation(SpawnLoc, Projected))
+		{
+			SpawnLoc = Projected.Location;
+		}
+
+		FRotator SpawnRot = FRotator::ZeroRotator;
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		ACharacter* NewAICharacter = GetWorld()->SpawnActor<ACharacter>(AICharacterClass, SpawnLoc, SpawnRot, Params);
+		if (!IsValid(NewAICharacter))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn AI Character."));
+			continue;
+		}
+
+		APTAIController* NewAIController = GetWorld()->SpawnActor<APTAIController>(AIControllerClass);
+		if (!IsValid(NewAIController))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Spawned AI Character has no valid AI Controller."));
+			continue;
+		}
+
+		NewAIController->Possess(NewAICharacter);
+
+		AllAIControllers.Add(NewAIController);
+	}
+}
+
+void APTGameModeBase::SpawnPlayerCharacter(APTPlayerController* NewPlayer)
+{
+	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!IsValid(NavSys))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Navigation System is not valid."));
+		return;
+	}
+
+	if (SpawnPoints.Num() == 0)
+	{
+		return;
+	}
+
+	FVector Base = SpawnPoints[FMath::RandRange(0, SpawnPoints.Num() - 1)];
+	FVector Offset = UKismetMathLibrary::RandomUnitVector() * 200.f;
+	Offset.Z = 0.f;
+	FVector SpawnLoc = Base + Offset;
+
+	FNavLocation Projected;
+	if (NavSys->ProjectPointToNavigation(SpawnLoc, Projected))
+	{
+		SpawnLoc = Projected.Location;
+	}
+
+	FRotator SpawnRot = FRotator::ZeroRotator;
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	APTPlayerCharacter* NewPlayerCharacter = GetWorld()->SpawnActor<APTPlayerCharacter>(PlayerCharacterClass, SpawnLoc, SpawnRot, Params);
+	if (!IsValid(NewPlayerCharacter))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn AI Character."));
+		return;
+	}
+
+	NewPlayer->Possess(NewPlayerCharacter);
+	NewPlayerCharacter->NetMulticastRPCRemoveBlockAttackTag();
+}
+
+void APTGameModeBase::CollectSpawnPoints()
+{
+	SpawnPoints.Empty();
+
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+		if (Actor->ActorHasTag("SpawnPoint"))
+		{
+			SpawnPoints.Add(Actor->GetActorLocation());
+		}
 	}
 }

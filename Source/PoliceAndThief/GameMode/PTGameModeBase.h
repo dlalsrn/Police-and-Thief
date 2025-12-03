@@ -28,33 +28,53 @@ private:
 
 	void NotifyAllPlayers(const FString& Message);
 
-	void FindAllAIControllers();
+	void StartGame();
 
-	void PossessRandomCharacter(APlayerController* NewPlayer);
+	void ResetGame();
 
-	void DestroyInitialCharacter();
+	void DestroyAICharacters();
+
+	void DestroyInitialPlayerCharacters();
+
+	void SpawnAICharacters();
+
+	void SpawnPlayerCharacter(APTPlayerController* NewPlayer);
+
+	void CollectSpawnPoints();
 
 protected:
-	FTimerHandle MainTimerHandle;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 WaitingTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 EndingTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 SpawnAICharacterCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<ACharacter> AICharacterClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<APTAIController> AIControllerClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<APTPlayerCharacter> PlayerCharacterClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FVector> SpawnPoints;
+
+	FTimerHandle MainTimerHandle;
 
 	int32 RemainWaitingTimeForPlaying;
 
 	int32 MinimumPlayerCountForPlaying;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 EndingTime;
 
 	int32 RemainWaitingTimeForEnding;
 
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<APTAIController>> AllAIControllers;
-
-	UPROPERTY()
-	TArray<TObjectPtr<APTPlayerCharacter>> AllAICharacters;
 
 	UPROPERTY()
 	TArray<TObjectPtr<APTPlayerController>> AlivePlayerControllers;

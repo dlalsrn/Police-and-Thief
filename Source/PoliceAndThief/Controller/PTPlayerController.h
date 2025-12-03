@@ -20,6 +20,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPCNotificationMessage(const FString& Message);
 
+	UFUNCTION(Client, Reliable)
+	void ClientRPCReturnToTitle();
+
 	void SetNotificationText(const FString& Message);
 	
 protected:
@@ -44,6 +47,4 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UNotificationWidget> NotificationWidgetInstance;
-
-	FVector OriginalLocation;
 };

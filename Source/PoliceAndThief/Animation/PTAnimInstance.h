@@ -4,7 +4,6 @@
 #include "Animation/AnimInstance.h"
 #include "PTAnimInstance.generated.h"
 
-class APTPlayerCharacter;
 class UCharacterMovementComponent;
 
 UCLASS()
@@ -21,7 +20,7 @@ public:
 
 protected:
 	UPROPERTY()
-	TObjectPtr<APTPlayerCharacter> OwnerCharacter;
+	TObjectPtr<ACharacter> OwnerCharacter;
 
 	UPROPERTY()
 	TObjectPtr<UCharacterMovementComponent> OwnerCharacterMovementComponent;

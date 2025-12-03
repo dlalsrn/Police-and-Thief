@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/NotificationWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 APTPlayerController::APTPlayerController()
 {
@@ -35,8 +36,6 @@ void APTPlayerController::BeginPlay()
 		}
 	}
 
-	OriginalLocation = GetPawn()->GetActorLocation();
-
 	FInputModeGameOnly Mode;
 	SetInputMode(Mode);
 
@@ -59,6 +58,14 @@ void APTPlayerController::SetupInputComponent()
 void APTPlayerController::ClientRPCNotificationMessage_Implementation(const FString& Message)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Message);
+}
+
+void APTPlayerController::ClientRPCReturnToTitle_Implementation()
+{
+	if (IsLocalController() == true)
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("Title")), true);
+	}
 }
 
 void APTPlayerController::SetNotificationText(const FString& Message)

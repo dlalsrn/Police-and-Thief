@@ -6,7 +6,7 @@ void UPTAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	OwnerCharacter = Cast<APTPlayerCharacter>(GetOwningActor());
+	OwnerCharacter = Cast<ACharacter>(GetOwningActor());
 	if (IsValid(OwnerCharacter))
 	{
 		OwnerCharacterMovementComponent = OwnerCharacter->GetCharacterMovement();
@@ -26,8 +26,8 @@ void UPTAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	GroundSpeed = FVector(Velocity.X, Velocity.Y, 0.f).Size();
 	bIsFalling = OwnerCharacterMovementComponent->IsFalling();
 
-	bool bIsLocallyControlled = OwnerCharacter->IsLocallyControlled(); // AI 판별
-	bShouldMove = (bIsLocallyControlled ? !OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero() : true) && (3.f < GroundSpeed);
+	bool bIsPlayerControlled = TryGetPawnOwner()->IsPlayerControlled(); // AI 판별
+	bShouldMove = (bIsPlayerControlled ? !OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero() : true) && (0.01f < GroundSpeed);
 }
 
 void UPTAnimInstance::SetIsDeath(bool bInIsDeath)
