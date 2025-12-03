@@ -1,5 +1,7 @@
 #include "GA/GA_Attack.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UGA_Attack::UGA_Attack()
 {
@@ -36,6 +38,12 @@ void UGA_Attack::ActivateAbility(
 		Task->OnCancelled.AddDynamic(this, &UGA_Attack::OnMontageCancelled);
 
 		Task->ReadyForActivation();
+
+		ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
+		if (IsValid(Character))
+		{
+			Character->GetCharacterMovement()->SetMovementMode(MOVE_None);
+		}
 	}
 	else
 	{
@@ -52,6 +60,12 @@ void UGA_Attack::EndAbility(
 	bool bWasCancelled
 )
 {
+	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
+	if (IsValid(Character))
+	{
+		Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
