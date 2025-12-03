@@ -44,4 +44,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UNotificationWidget> NotificationWidgetInstance;
+
+	FVector OriginalLocation;
 };

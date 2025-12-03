@@ -46,6 +46,15 @@ APTPlayerCharacter::APTPlayerCharacter()
 void APTPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(LogTemp, Warning, TEXT("Add Character Block Attack Tag"));
+	ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Block.Attack")));
+}
+
+void APTPlayerCharacter::NetMulticastRPCRemoveBlockAttackTag_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Remove Character Block Attack Tag"));
+	ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Block.Attack")));
 }
 
 void APTPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

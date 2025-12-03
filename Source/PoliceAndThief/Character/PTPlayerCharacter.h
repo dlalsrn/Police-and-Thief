@@ -31,6 +31,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void DrawDebugAttackCollision(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticastRPCRemoveBlockAttackTag();
+
 protected:
 	virtual void BeginPlay() override;
 

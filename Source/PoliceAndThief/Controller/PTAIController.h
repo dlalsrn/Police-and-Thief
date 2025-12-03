@@ -14,6 +14,8 @@ class POLICEANDTHIEF_API APTAIController : public AAIController
 public:
 	void StartAIControl();
 
+	void StopAIControl();
+
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 

@@ -5,6 +5,8 @@
 #include "PTGameModeBase.generated.h"
 
 class APTPlayerController;
+class APTAIController;
+class APTPlayerCharacter;
 
 UCLASS()
 class POLICEANDTHIEF_API APTGameModeBase : public AGameModeBase
@@ -26,6 +28,12 @@ private:
 
 	void NotifyAllPlayers(const FString& Message);
 
+	void FindAllAIControllers();
+
+	void PossessRandomCharacter(APlayerController* NewPlayer);
+
+	void DestroyInitialCharacter();
+
 protected:
 	FTimerHandle MainTimerHandle;
 
@@ -42,6 +50,15 @@ protected:
 	int32 RemainWaitingTimeForEnding;
 
 private:
+	UPROPERTY()
+	TArray<TObjectPtr<APTAIController>> AllAIControllers;
+
+	UPROPERTY()
+	TArray<TObjectPtr<APTPlayerCharacter>> AllAICharacters;
+
+	UPROPERTY()
 	TArray<TObjectPtr<APTPlayerController>> AlivePlayerControllers;
+
+	UPROPERTY()
 	TArray<TObjectPtr<APTPlayerController>> DeadPlayerControllers;
 };

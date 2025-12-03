@@ -1,18 +1,11 @@
 #include "Controller/PTAIController.h"
 #include "Character/PTPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "PoliceAndThief.h"
+#include "BrainComponent.h"
 
 void APTAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	PT_LOG_NET(LogPTNet, Log, TEXT("AI Controller Possessed Pawn: %s"), *InPawn->GetName());
 }
 
 void APTAIController::BeginPlay()
@@ -31,11 +24,23 @@ void APTAIController::StartAIControl()
 	);
 }
 
+void APTAIController::StopAIControl()
+{
+	UBrainComponent* BrainComp = GetBrainComponent();
+	if (IsValid(BrainComp))
+	{
+		BrainComp->StopLogic(TEXT("Stop AI Control"));
+	}
+}
+
 void APTAIController::StartBehaviorTree()
 {
 	if (BehaviorTree)
 	{
 		RunBehaviorTree(BehaviorTree);
-		PT_LOG_NET(LogPTNet, Log, TEXT("AI Controller Started Behavior Tree"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BehaviorTree is not assigned in PTAIController."));
 	}
 }

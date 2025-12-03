@@ -35,6 +35,8 @@ void APTPlayerController::BeginPlay()
 		}
 	}
 
+	OriginalLocation = GetPawn()->GetActorLocation();
+
 	FInputModeGameOnly Mode;
 	SetInputMode(Mode);
 

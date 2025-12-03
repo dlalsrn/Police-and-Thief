@@ -50,7 +50,6 @@ void UGA_HitCheck::ActivateAbility(
 		APTPlayerCharacter* HitCharacter = Cast<APTPlayerCharacter>(HitResult.GetActor());
 		if (IsValid(HitCharacter) && !HitCharacters.Contains(HitCharacter))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Character: %s, From: %s"), *HitCharacter->GetName(), *ActorInfo->AvatarActor->GetName());
 			HitCharacters.Add(HitCharacter);
 		}
 	}
