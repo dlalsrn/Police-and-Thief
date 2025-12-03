@@ -13,18 +13,19 @@ void APTGameModeBase::PostLogin(APlayerController* NewPlayer)
 	}
 
 	APTPlayerController* NewPTPlayer = Cast<APTPlayerController>(NewPlayer);
-	if (IsValid(NewPTPlayer) && !AllPlayerControllers.Contains(NewPTPlayer))
+	if (IsValid(NewPTPlayer) && !AlivePlayerControllers.Contains(NewPTPlayer))
 	{
-		AllPlayerControllers.Add(NewPTPlayer);
+		AlivePlayerControllers.Add(NewPTPlayer);
 	}
 }
 
 void APTGameModeBase::Logout(AController* Exiting)
 {
 	APTPlayerController* ExitingPTPlayer = Cast<APTPlayerController>(Exiting);
-	if (IsValid(ExitingPTPlayer) && AllPlayerControllers.Contains(ExitingPTPlayer))
+	if (IsValid(ExitingPTPlayer) && AlivePlayerControllers.Contains(ExitingPTPlayer))
 	{
-		AllPlayerControllers.Remove(ExitingPTPlayer);
+		AlivePlayerControllers.Remove(ExitingPTPlayer);
+		DeadPlayerControllers.Add(ExitingPTPlayer);
 	}
 
 	Super::Logout(Exiting);
@@ -47,6 +48,15 @@ void APTGameModeBase::BeginPlay()
 	RemainWaitingTimeForEnding = EndingTime;
 }
 
+void APTGameModeBase::OnCharacterDead(APTPlayerController* InController)
+{
+	if (IsValid(InController) && AlivePlayerControllers.Contains(InController))
+	{
+		AlivePlayerControllers.Remove(InController);
+		DeadPlayerControllers.Add(InController);
+	}
+}
+
 void APTGameModeBase::ElapsedTimerForMain()
 {
 	APTGameStateBase* PTGameState = GetGameState<APTGameStateBase>();
@@ -60,8 +70,9 @@ void APTGameModeBase::ElapsedTimerForMain()
 	{
 		case EMatchState::None:
 			break;
+
 		case EMatchState::Wait:
-			if (AllPlayerControllers.Num() < MinimumPlayerCountForPlaying)
+			if (AlivePlayerControllers.Num() < MinimumPlayerCountForPlaying)
 			{
 				NotificationString = FString::Printf(TEXT("Wait another players for playing."));
 				RemainWaitingTimeForPlaying = WaitingTime;
@@ -81,10 +92,11 @@ void APTGameModeBase::ElapsedTimerForMain()
 			NotifyAllPlayers(NotificationString);
 			
 			break;
-		case EMatchState::Play:
-			PTGameState->SetAlivePlayerCount(AllPlayerControllers.Num());
 
-			NotificationString = FString::Printf(TEXT("%d / %d"), PTGameState->GetAlivePlayerCount(), AllPlayerControllers.Num());
+		case EMatchState::Play:
+			PTGameState->SetAlivePlayerCount(AlivePlayerControllers.Num());
+
+			NotificationString = FString::Printf(TEXT("%d / %d"), PTGameState->GetAlivePlayerCount(), AlivePlayerControllers.Num() + DeadPlayerControllers.Num());
 
 			NotifyAllPlayers(NotificationString);
 
@@ -94,8 +106,22 @@ void APTGameModeBase::ElapsedTimerForMain()
 			}
 
 			break;
+
 		case EMatchState::End:
+			NotificationString = FString::Printf(TEXT("Waiting %d for returning to title."), RemainWaitingTimeForEnding);
+
+			NotifyAllPlayers(NotificationString);
+
+			--RemainWaitingTimeForEnding;
+
+			if (RemainWaitingTimeForEnding <= 0)
+			{
+				MainTimerHandle.Invalidate();
+				return;
+			}
+
 			break;
+
 		default:
 			break;
 	}
@@ -103,8 +129,13 @@ void APTGameModeBase::ElapsedTimerForMain()
 
 void APTGameModeBase::NotifyAllPlayers(const FString& Message)
 {
-	for (auto AlivePlayerController : AllPlayerControllers)
+	for (auto AlivePlayerController : AlivePlayerControllers)
 	{
-		AlivePlayerController->ClientRPCNotificationMessage(Message);
+		AlivePlayerController->SetNotificationText(Message);
+	}
+
+	for (auto DeadPlayerController : DeadPlayerControllers)
+	{
+		DeadPlayerController->SetNotificationText(Message);
 	}
 }

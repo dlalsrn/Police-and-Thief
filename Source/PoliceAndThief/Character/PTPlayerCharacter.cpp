@@ -8,6 +8,8 @@
 #include "PlayerState/PTPlayerState.h"
 #include "PoliceAndThief.h"
 #include "Animation/PTAnimInstance.h"
+#include "GameMode/PTGameModeBase.h"
+#include "Controller/PTPlayerController.h"
 
 APTPlayerCharacter::APTPlayerCharacter()
 {
@@ -184,6 +186,16 @@ void APTPlayerCharacter::ServerRPCOnHit_Implementation()
 	GetCharacterMovement()->StopMovementImmediately();
 
 	SetLifeSpan(5.0f);
+
+	APTGameModeBase* PTGameMode = GetWorld()->GetAuthGameMode<APTGameModeBase>();
+	if (IsValid(PTGameMode))
+	{
+		APTPlayerController* PC = Cast<APTPlayerController>(GetController());
+		if (IsValid(PC))
+		{
+			PTGameMode->OnCharacterDead(PC);
+		}
+	}
 
 	NetMulticastRPCOnDie();
 }

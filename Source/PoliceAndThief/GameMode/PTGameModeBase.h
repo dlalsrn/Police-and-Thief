@@ -11,6 +11,9 @@ class POLICEANDTHIEF_API APTGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	void OnCharacterDead(APTPlayerController* InController);
+
 protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
@@ -39,5 +42,6 @@ protected:
 	int32 RemainWaitingTimeForEnding;
 
 private:
-	TArray<TObjectPtr<APTPlayerController>> AllPlayerControllers;
+	TArray<TObjectPtr<APTPlayerController>> AlivePlayerControllers;
+	TArray<TObjectPtr<APTPlayerController>> DeadPlayerControllers;
 };

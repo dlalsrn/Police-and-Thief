@@ -3,9 +3,18 @@
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
 #include "Net/UnrealNetwork.h"
+#include "Blueprint/UserWidget.h"
+#include "UI/NotificationWidget.h"
 
 APTPlayerController::APTPlayerController()
 {
+}
+
+void APTPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APTPlayerController, NotifactionText);
 }
 
 void APTPlayerController::BeginPlay()
@@ -15,6 +24,15 @@ void APTPlayerController::BeginPlay()
 	if (!IsLocalController())
 	{
 		return;
+	}
+
+	if (IsValid(NotificationWidgetClass) || IsLocalController())
+	{
+		NotificationWidgetInstance = Cast<UNotificationWidget>(CreateWidget<UUserWidget>(this, NotificationWidgetClass));
+		if (IsValid(NotificationWidgetInstance))
+		{
+			NotificationWidgetInstance->AddToViewport();
+		}
 	}
 
 	FInputModeGameOnly Mode;
@@ -39,4 +57,14 @@ void APTPlayerController::SetupInputComponent()
 void APTPlayerController::ClientRPCNotificationMessage_Implementation(const FString& Message)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Message);
+}
+
+void APTPlayerController::SetNotificationText(const FString& Message)
+{
+	NotifactionText = FText::FromString(Message);
+}
+
+void APTPlayerController::OnRep_NotificationText()
+{
+	NotificationWidgetInstance->SetNotificationText(NotifactionText);
 }
