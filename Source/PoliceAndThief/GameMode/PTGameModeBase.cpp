@@ -128,6 +128,18 @@ void APTGameModeBase::ElapsedTimerForMain()
 					PTAIController->StopAIControl();
 				}
 			}
+
+			if (AlivePlayerControllers.Num() == 1)
+			{
+				FString WinnerResultString = TEXT("YOU WIN!");
+				AlivePlayerControllers[0]->SetResultText(WinnerResultString);
+			}
+
+			FString LoserResultString = TEXT("YOU LOSE!");
+			for (APTPlayerController* DeadController : DeadPlayerControllers)
+			{
+				DeadController->SetResultText(LoserResultString);
+			}
 		}
 
 		break;

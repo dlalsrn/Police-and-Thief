@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/NotificationWidget.h"
+#include "UI/ResultWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 APTPlayerController::APTPlayerController()
@@ -33,6 +34,15 @@ void APTPlayerController::BeginPlay()
 		if (IsValid(NotificationWidgetInstance))
 		{
 			NotificationWidgetInstance->AddToViewport();
+		}
+	}
+
+	if (IsValid(ResultWidgetClass) || IsLocalController())
+	{
+		ResultWidgetInstance = Cast<UResultWidget>(CreateWidget<UUserWidget>(this, ResultWidgetClass));
+		if (IsValid(ResultWidgetInstance))
+		{
+			ResultWidgetInstance->AddToViewport();
 		}
 	}
 
@@ -73,7 +83,17 @@ void APTPlayerController::SetNotificationText(const FString& Message)
 	NotifactionText = FText::FromString(Message);
 }
 
+void APTPlayerController::SetResultText(const FString& Message)
+{
+	ResultText = FText::FromString(Message);
+}
+
 void APTPlayerController::OnRep_NotificationText()
 {
 	NotificationWidgetInstance->SetNotificationText(NotifactionText);
+}
+
+void APTPlayerController::OnRep_ResultText()
+{
+	ResultWidgetInstance->SetResultText(ResultText);
 }

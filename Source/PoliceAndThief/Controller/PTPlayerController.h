@@ -6,6 +6,7 @@
 
 class UInputMappingContext;
 class UNotificationWidget;
+class UResultWidget;
 
 UCLASS()
 class POLICEANDTHIEF_API APTPlayerController : public APlayerController
@@ -24,6 +25,8 @@ public:
 	void ClientRPCReturnToTitle();
 
 	void SetNotificationText(const FString& Message);
+
+	void SetResultText(const FString& Message);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -34,6 +37,9 @@ private:
 	UFUNCTION()
 	void OnRep_NotificationText();
 
+	UFUNCTION()
+	void OnRep_ResultText();
+
 protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UInputMappingContext> DefaultMappingContexts;
@@ -41,10 +47,19 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UNotificationWidget> NotificationWidgetClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UResultWidget> ResultWidgetClass;
+
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_NotificationText)
 	FText NotifactionText;
 
+	UPROPERTY(ReplicatedUsing = OnRep_ResultText)
+	FText ResultText;
+
 	UPROPERTY()
 	TObjectPtr<UNotificationWidget> NotificationWidgetInstance;
+
+	UPROPERTY()
+	TObjectPtr<UResultWidget> ResultWidgetInstance;
 };
