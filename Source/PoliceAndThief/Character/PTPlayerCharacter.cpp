@@ -47,7 +47,7 @@ void APTPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Block.Attack")));
+	//ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Block.Attack")));
 }
 
 void APTPlayerCharacter::NetMulticastRPCRemoveBlockAttackTag_Implementation()

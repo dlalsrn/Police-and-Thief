@@ -1,5 +1,7 @@
 #include "GA/GA_HitCheck.h"
 #include "Character/PTPlayerCharacter.h"
+#include "Abilities/Tasks/AbilityTask_WaitTargetData.h"
+#include "TargetActor/PTTargetActorSphereTrace.h"
 
 UGA_HitCheck::UGA_HitCheck()
 {
@@ -26,47 +28,28 @@ void UGA_HitCheck::ActivateAbility(
 		return;
 	}
 
-	TArray<FHitResult> OutHitResults;
-	TSet<APTPlayerCharacter*> HitCharacters;
-	FCollisionQueryParams Params(NAME_None, false, ActorInfo->AvatarActor.Get());
+	UAbilityTask_WaitTargetData* Task =
+		UAbilityTask_WaitTargetData::WaitTargetData(
+			this,
+			TEXT("HitCheckTask"),
+			EGameplayTargetingConfirmation::Instant,
+			APTTargetActorSphereTrace::StaticClass()
+		);
 
-	const float AttackRange = 100.f;
-	const float AttackRadius = 50.f;
-	FVector ForwardVec = ActorInfo->AvatarActor->GetActorForwardVector();
-	FVector StartLocation = ActorInfo->AvatarActor->GetActorLocation();
-	FVector EndLocation = StartLocation + ForwardVec * AttackRange;
-	bool bHit = ActorInfo->AvatarActor->GetWorld()->SweepMultiByChannel(
-		OutHitResults,
-		StartLocation,
-		EndLocation,
-		FQuat::Identity,
-		ECC_Pawn,
-		FCollisionShape::MakeSphere(AttackRadius),
-		Params
-	);
+	Task->ValidData.AddDynamic(this, &ThisClass::OnTargetDataReceived);
+	Task->ReadyForActivation();
 
-	for (const FHitResult& HitResult : OutHitResults)
+	AGameplayAbilityTargetActor* GenericActor = nullptr;
+	if (Task->BeginSpawningActor(this, APTTargetActorSphereTrace::StaticClass(), GenericActor))
 	{
-		APTPlayerCharacter* HitCharacter = Cast<APTPlayerCharacter>(HitResult.GetActor());
-		if (IsValid(HitCharacter) && !HitCharacters.Contains(HitCharacter))
+		APTTargetActorSphereTrace* SpawnedActor = Cast<APTTargetActorSphereTrace>(GenericActor);
+		if (SpawnedActor)
 		{
-			HitCharacters.Add(HitCharacter);
+			SpawnedActor->SetActorLocation(ActorInfo->AvatarActor->GetActorLocation());
 		}
-	}
 
-	for (APTPlayerCharacter* HitCharacter : HitCharacters)
-	{
-		HitCharacter->ServerRPCOnHit();
+		Task->FinishSpawningActor(this, GenericActor);
 	}
-
-	FColor DrawColor = bHit ? FColor::Green : FColor::Red;
-	APTPlayerCharacter* PlayerCharacter = Cast<APTPlayerCharacter>(ActorInfo->AvatarActor.Get());
-	if (IsValid(PlayerCharacter))
-	{
-		PlayerCharacter->DrawDebugAttackCollision(DrawColor, StartLocation, EndLocation, ForwardVec);
-	}
-
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
 void UGA_HitCheck::EndAbility(
@@ -78,4 +61,34 @@ void UGA_HitCheck::EndAbility(
 )
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UGA_HitCheck::OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& DataHandle)
+{
+	TSet<APTPlayerCharacter*> UniqueTargets;
+	for (int32 i = 0; i < DataHandle.Num(); ++i)
+	{
+		const FGameplayAbilityTargetData* Data = DataHandle.Get(i);
+
+		if (const FGameplayAbilityTargetData_SingleTargetHit* HitData = static_cast<const FGameplayAbilityTargetData_SingleTargetHit*>(Data))
+		{
+			APTPlayerCharacter* HitActor = Cast<APTPlayerCharacter>(HitData->HitResult.GetActor());
+			if (IsValid(HitActor))
+			{
+				UniqueTargets.Add(HitActor);
+			}
+		}
+	}
+
+	for (APTPlayerCharacter* HitCharacter : UniqueTargets)
+	{
+		HitCharacter->ServerRPCOnHit();
+	}
+
+	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+}
+
+void UGA_HitCheck::OnTargetDataCancelled()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }

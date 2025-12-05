@@ -26,4 +26,11 @@ public:
 		bool bReplicateEndAbility,
 		bool bWasCancelled
 	) override;
+
+private:
+	UFUNCTION()
+	void OnTargetDataReceived(const FGameplayAbilityTargetDataHandle& DataHandle);
+
+	UFUNCTION()
+	void OnTargetDataCancelled();
 };
